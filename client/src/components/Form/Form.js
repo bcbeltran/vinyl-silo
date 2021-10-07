@@ -12,14 +12,14 @@ const Form = ({currentId, setCurrentId}) => {
     artist: '',
     year: '',
     message: '',
-    creator: '',
     tags: '',
     selectedFile: '',
 
     });
-    const post = useSelector((state) => currentId ? state.posts.find((p) => p._id === currentId) : null);
+    const post = useSelector((state) => currentId ? state.posts.find((p) => p._id === currentId) : 0);
     const classes = useStyles();
     const dispatch = useDispatch();
+    const user = JSON.parse(localStorage.getItem('profile'));
 
     useEffect(() => {
         if(post) {
@@ -30,24 +30,33 @@ const Form = ({currentId, setCurrentId}) => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if(currentId) {
-            dispatch(updatePost(currentId, albumData));
+        if(currentId === 0) {
+            dispatch(createPost({ ...albumData, name: user?.result?.name }));
         } else {
 
-            dispatch(createPost(albumData));
+            dispatch(updatePost(currentId, { ...albumData, name: user?.result?.name }));
         }
         clear();
         
     };
 
+    if(!user?.result?.name) {
+        return (
+            <Paper className={classes.paper}>
+                <Typography variant='h5' style={{fontFamily: 'monospace'}}>
+                    Sign up or sign in to share your VINYL SILO!
+                </Typography>
+            </Paper>
+        )
+    };
+
     const clear = () => {
-        setCurrentId(null);
+        setCurrentId(0);
         setAlbumData({
 			title: "",
 			artist: "",
 			year: "",
 			message: "",
-			creator: "",
 			tags: "",
 			selectedFile: "",
 		});
@@ -57,14 +66,6 @@ const Form = ({currentId, setCurrentId}) => {
         <Paper className={classes.paper}>
             <form autoComplete='off' noValidate className={`${classes.root} ${classes.form} ${classes.textfield}`} onSubmit={handleSubmit} >
                 <Typography variant='h6'>{currentId ? 'Edit' : 'Add'} an Album</Typography>
-                <TextField 
-                name='creator' 
-                variant='outlined' 
-                label='Creator' 
-                fullWidth
-                value={albumData.creator}
-                onChange={(e) => setAlbumData({ ...albumData, creator: e.target.value })}
-                />
                 <TextField 
                 name='title' 
                 variant='outlined' 
@@ -105,15 +106,8 @@ const Form = ({currentId, setCurrentId}) => {
                 value={albumData.tags}
                 onChange={(e) => setAlbumData({ ...albumData, tags: e.target.value.split(',') })}
                 />
-                <div className={classes.fileInput}>
-                    <FileBase
-                        type="file"
-                        multiple={false}
-                        onDone={({base64}) => setAlbumData({ ...albumData, selectedFile: base64 })}
-
-                    />
-                </div>
-                <Button className={classes.buttonSubmit} variant='contained' color='white' size='large' type='submit' onClick={handleSubmit} fullWidth>Submit</Button>
+                <div className={classes.fileInput}><FileBase type="file" multiple={false} onDone={({ base64 }) => setAlbumData({ ...albumData, selectedFile: base64 })} /></div>
+                <Button className={classes.buttonSubmit} variant='contained' color='white' size='large' type='submit' fullWidth>Submit</Button>
                 <Button variant='contained' color='white' size='small' onClick={clear} fullWidth>Clear</Button>
             </form>
         </Paper>
